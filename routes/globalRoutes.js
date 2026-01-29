@@ -2,7 +2,7 @@ import express from "express";
 import authRoutes from "./authRoutes.js";
 import verifyJWT from "../middlewares/jwtMiddleware.js";
 import dashboardController from "../controllers/dashboardController.js";
-import apiController from "../controllers/apiController.js";
+import apiRoutes from "./apiRoutes.js";
 
 const globalRoutes = express.Router();
 // console.log("GLOBAL ROUTES FILE LOADED");
@@ -13,6 +13,6 @@ globalRoutes.use((req, res, next) => {
 });
 globalRoutes.use("/auth", authRoutes);
 globalRoutes.get("/dashboard", verifyJWT, dashboardController);
-globalRoutes.post("/apikeys", verifyJWT, apiController);
+globalRoutes.use("/apikeys", apiRoutes);
 
 export default globalRoutes;
