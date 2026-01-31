@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-import LogoutActivity from "../models/LogoutActivity.js";
-import TokenBlacklist from "../models/TokenBlacklist.js";
+import LogoutActivity from "../../models/users/LogoutActivity.js";
+import TokenBlacklist from "../../models/jwt/TokenBlacklist.js";
 
 const logoutController = async (req, res) => {
   try {
@@ -19,7 +19,6 @@ const logoutController = async (req, res) => {
           userId: decoded.id, // optional but useful
           expiresAt: new Date(decoded.exp * 1000),
         });
-        console.log("token blacklisted ");
 
         // 2️⃣ Log logout activity (best-effort)
         if (req.logoutInfo) {

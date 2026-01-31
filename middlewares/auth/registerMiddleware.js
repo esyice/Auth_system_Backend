@@ -2,7 +2,7 @@
 import express from "express";
 
 const registerMiddleware = (req, res, next) => {
-  console.log("🧩 Register middleware triggered");
+  // console.log("🧩 Register middleware triggered");
 
   const { name, email, password } = req.body;
 
@@ -11,7 +11,7 @@ const registerMiddleware = (req, res, next) => {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-  console.log("✅ Register middleware passed");
+  // console.log("✅ Register middleware passed");
   next(); // pass control to the controller
 };
 

@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+import User from "../../models/users/User.js";
 import dotenv from "dotenv";
-import LoginActivity from "../models/LoginActivity.js";
+import LoginActivity from "../../models/users/LoginActivity.js";
 import geoip from "geoip-lite";
 
 // Load environment variables from .env file
@@ -27,7 +27,7 @@ const loginController = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
     // 3. Check account status (CORRECT & SAFE)
-    if (user.accountStatus === "deactivated") {
+    if (user.accountStatus === false) {
       return res.status(403).json({
         success: false,
         code: "ACCOUNT_DEACTIVATED",
@@ -41,7 +41,6 @@ const loginController = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Invalid email or password" });
     }
-    // console.log("login controllers");
 
     // get geo location
     const geo = geoip.lookup(req.ip);

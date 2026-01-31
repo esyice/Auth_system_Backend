@@ -1,9 +1,23 @@
 // controllers/dashboardController.js
-import ApiKey from "../models/Apikeys.js";
+import ApiKey from "../../models/apis/Apikeys.js";
+
+const formatIST = (date) => {
+  if (!date) return null;
+
+  return new Date(date).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 const dashboardController = async (req, res) => {
   try {
-    const user = req.user; // set by verifyJWT middleware
+
+    const user = req.user;
 
     /* ================= SAFETY ================= */
     if (!user) {
@@ -22,43 +36,32 @@ const dashboardController = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // total number of tokens
     const totalTokens = apiKeys.length;
 
-    // last issued token (most recent)
     const lastIssuedToken =
       apiKeys.length > 0
         ? {
-            issuedAt: apiKeys[0].createdAt
-              ? apiKeys[0].createdAt.toISOString().split("T")[0]
-              : null,
+            issuedAt: formatIST(apiKeys[0].createdAt),
           }
         : null;
 
-    // map to desired format
     const tokens =
       apiKeys.length > 0
         ? apiKeys.map((key) => ({
             id: key._id.toString(),
             name: key.name,
             active: key.active,
-            key: key.rawKey, // 🚨 exposed
-            expiresAt: key.expiresAt
-              ? key.expiresAt.toISOString().split("T")[0]
-              : "No Expiry",
-            lastIssued: key.createdAt
-              ? key.createdAt.toISOString().split("T")[0]
-              : null,
+            key: key.rawKey, // 🚨 DEV only
+            expiresAt: key.expiresAt ? formatIST(key.expiresAt) : "No Expiry",
+            lastIssued: formatIST(key.createdAt),
           }))
         : null;
 
-    /* ================= USAGE (mock for now) ================= */
+    /* ================= USAGE (mock) ================= */
     const usage = {
       today: 124,
       limit: 1000,
     };
-
-    console.log("networks calls dashboard controller");
 
     /* ================= FINAL RESPONSE ================= */
     return res.status(200).json({
@@ -72,7 +75,6 @@ const dashboardController = async (req, res) => {
         totalTokens,
         lastIssuedToken,
       },
-
       tokens,
       usage,
     });

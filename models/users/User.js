@@ -28,9 +28,8 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
     accountStatus: {
-      type: String,
-      enum: ["active", "deactivated"],
-      default: "active",
+      type: Boolean,
+      default: true, // true = active, false = deactivated
     },
   },
   { timestamps: true },

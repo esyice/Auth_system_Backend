@@ -1,8 +1,8 @@
 import express from "express";
 import authRoutes from "./authRoutes.js";
-import verifyJWT from "../middlewares/jwtMiddleware.js";
-import dashboardController from "../controllers/dashboardController.js";
 import apiRoutes from "./apiRoutes.js";
+import verifyJWT from "../middlewares/jwt/jwtMiddleware.js";
+import dashboardController from "../controllers/dashboard/dashboardController.js";
 
 const globalRoutes = express.Router();
 // console.log("GLOBAL ROUTES FILE LOADED");

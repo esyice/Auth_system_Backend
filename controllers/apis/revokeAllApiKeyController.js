@@ -1,4 +1,4 @@
-import ApiKey from "../models/Apikeys.js";
+import ApiKey from "../../models/apis/Apikeys.js";
 
 /**
  * POST /apikeys/revoke-all

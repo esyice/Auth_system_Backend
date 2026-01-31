@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
-import TokenBlacklist from "../models/TokenBlacklist.js";
+import User from "../../models/users/User.js";
+import TokenBlacklist from "../../models/jwt/TokenBlacklist.js";
 
 const verifyJWT = async (req, res, next) => {
   try {
