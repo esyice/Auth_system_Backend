@@ -1,48 +1,96 @@
 import bcrypt from "bcrypt";
 import User from "../../models/users/User.js";
+import OtpVerification from "../../models/verification/OtpVerification.js";
 
 const registerController = async (req, res) => {
+  // console.log("Register endpoint hit");
+
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, mobile } = req.body;
 
-    // 🧩 Basic field validation
+    /* =========================================================
+       1️⃣ BASIC VALIDATION
+    ========================================================== */
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({
+        message: "Name, email and password are required",
+      });
     }
 
-    // 🔍 Check if user already exists
+    /* =========================================================
+       2️⃣ CHECK IF USER ALREADY EXISTS
+       (Prevents duplicate accounts)
+    ========================================================== */
     const existingUser = await User.findOne({ email });
+
     if (existingUser) {
-      return res.status(409).json({ message: "User already exists" });
+      return res.status(409).json({
+        message: "User already exists",
+      });
     }
 
-    // 🔒 Hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // 💾 Create new user
-    const newUser = new User({
-      name,
-      email,
-      password: password,
+    /* =========================================================
+       3️⃣ VERIFY EMAIL WAS CONFIRMED VIA OTP
+       (We check temporary OTP collection)
+    ========================================================== */
+    const verification = await OtpVerification.findOne({
+      type: "email",
+      identifier: email,
+      isVerified: true,
     });
 
-    await newUser.save();
+    if (!verification) {
+      return res.status(400).json({
+        message: "Email not verified",
+      });
+    }
 
-    res.status(201).json({
+    /* =========================================================
+       4️⃣ HASH PASSWORD (NEVER STORE PLAIN PASSWORD)
+    ========================================================== */
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    /* =========================================================
+       5️⃣ CREATE USER
+       We permanently mark emailVerified = true
+       because OTP already validated it
+    ========================================================== */
+    const newUser = await User.create({
+      name,
+      email,
+      password: hashedPassword, // 🔥 FIXED (was saving plain password before)
+      mobile: mobile || null,
+      emailVerified: true, // 🔥 Important permanent flag
+      mobileVerified: false,
+    });
+
+    /* =========================================================
+       6️⃣ DELETE OTP RECORD
+       (OTP collection is temporary only)
+    ========================================================== */
+    await OtpVerification.deleteOne({
+      type: "email",
+      identifier: email,
+    });
+
+    /* =========================================================
+       7️⃣ RETURN SUCCESS RESPONSE
+    ========================================================== */
+    return res.status(201).json({
       success: true,
-      message: "✅ User registered successfully",
+      message: "User registered successfully",
       user: {
         id: newUser._id,
         name: newUser.name,
         email: newUser.email,
+        emailVerified: newUser.emailVerified,
       },
     });
   } catch (error) {
-    console.error("❌ Register error:", error.message);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+    console.error("Register error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
 

@@ -7,6 +7,9 @@ import logoutMiddleware from "../middlewares/auth/logoutMiddleware.js";
 import logoutController from "../controllers/auth/logoutController.js";
 import verify from "../middlewares/jwt/jwtMiddleware.js";
 import deactivateAccountController from "../controllers/auth/deactivateAccountController.js";
+import sendOtpController from "../controllers/auth/otp/sendOtpController.js";
+import verifyOtpController from "../controllers/auth/otp/verifyOtpController.js";
+import resetPassword from "../controllers/auth/resetPasswordController.js";
 
 const authRoutes = express.Router();
 
@@ -14,5 +17,10 @@ authRoutes.post("/register", registerMiddleware, registerController);
 authRoutes.post("/login", loginMiddleware, loginController);
 authRoutes.post("/logout", logoutMiddleware, logoutController);
 authRoutes.put("/account/deactivate", verify, deactivateAccountController);
+authRoutes.post("/send-otp", sendOtpController);
+authRoutes.post("/verify-otp", verifyOtpController);
+authRoutes.post("/reset-password", resetPassword);
+
+
 
 export default authRoutes;
