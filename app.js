@@ -16,7 +16,7 @@ app.use(
       "http://100.85.107.120:5173",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization" ,"X-API-Key"],
     credentials: true,
   }),
 );

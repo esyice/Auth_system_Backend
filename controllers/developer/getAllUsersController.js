@@ -73,6 +73,8 @@ const getAllUsers = async (req, res) => {
       ExternalUser.countDocuments(filter),
     ]);
 
+    console.log("usrs api called ");
+
     return res.status(200).json({
       success: true,
       project: {

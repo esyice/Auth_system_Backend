@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import ExternalUser from "../../models/users/ExternalUser.js";
 
 const registerExternal = async (req, res) => {
+
   try {
     const { name, email, password } = req.body;
 
