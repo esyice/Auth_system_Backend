@@ -1,40 +1,31 @@
-import OtpVerification from "../../../models/verification/OtpVerification.js";
+import { redisClient } from "../../../config/redis.js";
 
 const sendOtpController = async (req, res) => {
   try {
+    const flow = req.flow;
     const { type, identifier } = req.body;
 
-    if (!type || !identifier) {
+    if (!flow || !type || !identifier) {
       return res.status(400).json({
-        message: "Type and identifier required",
+        message: "Missing fields",
       });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    await OtpVerification.findOneAndUpdate(
-      { type, identifier },
-      {
-        type,
-        identifier,
-        otp,
-        otpExpiry: new Date(Date.now() + 5 * 60 * 1000),
-        attempts: 0,
-      },
-      { upsert: true, new: true }
-    );
+    const redisKey = `otp:${flow}:${type}:${identifier}`;
 
-    console.log(`${type} OTP for testing:`, otp);
-
-    return res.json({
-      message: "OTP sent successfully",
+    await redisClient.set(redisKey, JSON.stringify({ otp, attempts: 0 }), {
+      EX: 300,
     });
 
+    console.log("OTP:", otp);
+
+    return res.json({ message: "OTP sent successfully" });
   } catch (error) {
-    console.error("Send OTP error:", error);
-    return res.status(500).json({
-      message: "Server error",
-    });
+    console.log(error);
+
+    return res.status(500).json({ message: "Server error" });
   }
 };
 

@@ -2,10 +2,12 @@ import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import global from "./routes/globalRoutes.js";
+import { connectRedis } from "./config/redis.js";
 
 const app = express();
 
 connectDB();
+connectRedis();
 
 // Enable CORS
 app.use(

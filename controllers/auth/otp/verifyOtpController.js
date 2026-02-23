@@ -1,55 +1,67 @@
-import OtpVerification from "../../../models/verification/OtpVerification.js";
+import { redisClient } from "../../../config/redis.js";
+
+const MAX_ATTEMPTS = 5;
 
 const verifyOtpController = async (req, res) => {
-  // console.log("verify otp");
-
   try {
+    const flow = req.flow;
     const { type, identifier, otp } = req.body;
 
-    if (!type || !identifier || !otp) {
+    if (!flow || !type || !identifier || !otp) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
+
+    const otpKey = `otp:${flow}:${type}:${identifier}`;
+    const raw = await redisClient.get(otpKey);
+
+    if (!raw) {
       return res.status(400).json({
-        message: "Missing fields",
+        message: "OTP expired or not requested",
       });
     }
 
-    const record = await OtpVerification.findOne({ type, identifier });
+    const stored = JSON.parse(raw);
 
-    if (!record) {
-      return res.status(400).json({
-        message: "No OTP request found",
+    if (stored.attempts >= MAX_ATTEMPTS) {
+      await redisClient.del(otpKey);
+      return res.status(403).json({
+        message: "Too many failed attempts",
       });
     }
 
-    // Expiry check
-    if (record.otpExpiry < new Date()) {
-      await OtpVerification.deleteOne({ type, identifier });
-      return res.status(400).json({
-        message: "OTP expired",
-      });
+    if (stored.otp !== otp) {
+      stored.attempts += 1;
+
+      const ttl = await redisClient.ttl(otpKey);
+
+      if (ttl > 0) {
+        await redisClient.set(otpKey, JSON.stringify(stored), {
+          EX: ttl,
+        });
+      }
+
+      return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    // Wrong OTP
-    if (record.otp !== otp) {
-      record.attempts += 1;
-      await record.save();
+    // SUCCESS
+    const ttl = await redisClient.ttl(otpKey);
 
-      return res.status(400).json({
-        message: "Invalid OTP",
+    await redisClient.del(otpKey);
+
+    if (ttl > 0) {
+      const verifyKey = `verify:${flow}:${type}:${identifier}`;
+
+      await redisClient.set(verifyKey, "true", {
+        EX: ttl,
       });
     }
-
-    // ✅ SUCCESS — Mark as verified
-    record.isVerified = true;
-    await record.save();
 
     return res.json({
-      message: `${type} verified successfully`,
+      message: `${flow} verification successful`,
     });
   } catch (error) {
     console.error("Verify OTP error:", error);
-    return res.status(500).json({
-      message: "Server error",
-    });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 

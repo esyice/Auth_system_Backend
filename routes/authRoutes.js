@@ -10,6 +10,7 @@ import deactivateAccountController from "../controllers/auth/deactivateAccountCo
 import sendOtpController from "../controllers/auth/otp/sendOtpController.js";
 import verifyOtpController from "../controllers/auth/otp/verifyOtpController.js";
 import resetPassword from "../controllers/auth/resetPasswordController.js";
+import otpFlowMiddleware from "../middlewares/otpflow/otpFlowMiddleware.js";
 
 const authRoutes = express.Router();
 
@@ -17,10 +18,26 @@ authRoutes.post("/register", registerMiddleware, registerController);
 authRoutes.post("/login", loginMiddleware, loginController);
 authRoutes.post("/logout", logoutMiddleware, logoutController);
 authRoutes.put("/account/deactivate", verify, deactivateAccountController);
-authRoutes.post("/send-otp", sendOtpController);
-authRoutes.post("/verify-otp", verifyOtpController);
 authRoutes.post("/reset-password", resetPassword);
-
-
+authRoutes.post(
+  "/register/send-otp",
+  otpFlowMiddleware("register"),
+  sendOtpController,
+);
+authRoutes.post(
+  "/register/verify-otp",
+  otpFlowMiddleware("register"),
+  verifyOtpController,
+);
+authRoutes.post(
+  "/reset/send-otp",
+  otpFlowMiddleware("reset"),
+  sendOtpController,
+);
+authRoutes.post(
+  "/reset/verify-otp",
+  otpFlowMiddleware("reset"),
+  verifyOtpController,
+);
 
 export default authRoutes;
