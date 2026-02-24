@@ -5,6 +5,7 @@ import verifyJWT from "../middlewares/jwt/jwtMiddleware.js";
 import dashboardController from "../controllers/dashboard/dashboardController.js";
 import externalRoutes from "./externalRoutes.js";
 import developerRoutes from "./developerRoutes.js";
+import { sendEmail } from "../services/emailService.js";
 
 const globalRoutes = express.Router();
 // console.log("GLOBAL ROUTES FILE LOADED");
@@ -18,5 +19,20 @@ globalRoutes.get("/dashboard", verifyJWT, dashboardController);
 globalRoutes.use("/apikeys", apiRoutes);
 globalRoutes.use("/v1", externalRoutes);
 globalRoutes.use("/developer", developerRoutes);
+
+//test route
+globalRoutes.get("/testemail", async (req, res) => {
+  try {
+    await sendEmail({
+      to: "ansh@ezice.in",
+      subject: "Test Email",
+      html: "<h1>Email is working</h1>",
+    });
+
+    res.send("Email sent");
+  } catch (error) {
+    res.status(500).send("Email failed", error);
+  }
+});
 
 export default globalRoutes;

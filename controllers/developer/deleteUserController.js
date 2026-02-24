@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import ApiKey from "../../models/apis/Apikeys.js";
 import ExternalUser from "../../models/users/ExternalUser.js";
+import { clearProjectUserCache } from "../../utils/cacheInvalidation.js";
 
 const deleteUser = async (req, res) => {
   try {
@@ -39,6 +40,9 @@ const deleteUser = async (req, res) => {
         message: "User not found",
       });
     }
+
+    // ✅ Clear cache AFTER successful update
+    await clearProjectUserCache(projectId);
 
     return res.status(200).json({
       success: true,

@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import ExternalUser from "../../models/users/ExternalUser.js";
+import { clearProjectUserCache } from "../../utils/cacheInvalidation.js";
 
 const registerExternal = async (req, res) => {
-
   try {
     const { name, email, password } = req.body;
 
@@ -28,6 +28,9 @@ const registerExternal = async (req, res) => {
       projectId: req.projectId,
       ownerId: req.projectOwner,
     });
+
+    // ✅ Clear cache AFTER successful update
+    await clearProjectUserCache(projectId);
 
     res.status(201).json({
       success: true,
