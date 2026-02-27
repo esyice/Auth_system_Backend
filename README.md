@@ -88,18 +88,18 @@ A robust, secure, and scalable **authentication system backend** built with Node
 
 | Technology | Purpose |
 |------------|---------|
-| **Node.js** | JavaScript runtime environment |
+| **Node.js** | JavaScript runtime (ES Modules — `"type": "module"`) |
 | **Express.js v5** | Web application framework |
 | **MongoDB** | NoSQL database |
 | **Mongoose** | MongoDB object modeling (ODM) |
 | **Redis** | Token blacklisting & session invalidation |
 | **JWT** | JSON Web Token authentication |
 | **bcrypt** | Password hashing |
+| **nodemailer** | Email & OTP notification delivery |
 | **geoip-lite** | IP-based geolocation |
 | **express-validator** | Request validation middleware |
 | **dotenv** | Environment variable management |
 | **cors** | Cross-Origin Resource Sharing |
-| **axios** | HTTP client (for external requests) |
 | **cookie-parser** | Cookie parsing middleware |
 | **validator** | String validation utilities |
 | **nodemon** | Development auto-reload |
@@ -189,8 +189,13 @@ Auth_system_Backend/
 │   └── developerRoutes.js             # Developer project-user routes
 │
 ├── 📂 services/
-│   ├── emailService.js                # Email / OTP notification service
-│   └── tokenService.js                # Token generation service
+│   ├── 📂 email/
+│   │   ├── emailService.js            # Send emails (OTP, notifications)
+│   │   ├── transporter.js             # Nodemailer transporter setup
+│   │   └── 📂 templates/             # Email HTML templates
+│   ├── 📂 otp/
+│   │   └── otpService.js             # OTP generation & hashing
+│   └── redisService.js               # Redis helper methods
 │
 └── 📂 utils/
     ├── validators.js                  # Custom validation helpers
@@ -680,10 +685,10 @@ POST /api/developer/projects/:projectId/users
 ### Available Scripts
 
 ```bash
-# Start production server
+# Start production server (binds to 0.0.0.0 with --host)
 npm start
 
-# Start development server with hot reload & inspector
+# Start development server with hot reload & node inspector
 npm run dev
 ```
 

@@ -1,3 +1,5 @@
+import { redisClient } from "../config/redis.js";
+
 export const clearProjectUserCache = async (projectId) => {
   const pattern = `users:${projectId}:*`;
 

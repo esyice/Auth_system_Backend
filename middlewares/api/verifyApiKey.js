@@ -43,6 +43,25 @@ const verifyApiKey = async (req, res, next) => {
       });
     }
 
+    //📊 USAGE TRACKING
+    const today = new Date().toISOString().slice(0, 10);
+    const month = new Date().toISOString().slice(0, 7);
+
+    const dayKey = `usage:${apiKey._id}:day:${today}`;
+    const monthKey = `usage:${apiKey._id}:month:${month}`;
+    const totalKey = `usage:${apiKey._id}:total`;
+
+    const dayCount = await redisClient.incr(dayKey);
+    await redisClient.incr(monthKey);
+    await redisClient.incr(totalKey);
+
+    if (dayCount === 1) {
+      await redisClient.expire(dayKey, 86400);
+    }
+
+    await redisClient.expire(monthKey, 60 * 60 * 24 * 32);
+
+    // Attach project info to request for downstream use
     req.projectOwner = apiKey.userId;
     req.projectId = apiKey._id;
 

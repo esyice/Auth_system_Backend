@@ -1,5 +1,6 @@
 // controllers/dashboardController.js
 import ApiKey from "../../models/apis/Apikeys.js";
+import { redisClient } from "../../config/redis.js";
 
 const formatIST = (date) => {
   if (!date) return null;
@@ -16,7 +17,6 @@ const formatIST = (date) => {
 
 const dashboardController = async (req, res) => {
   try {
-
     const user = req.user;
 
     /* ================= SAFETY ================= */
@@ -39,11 +39,7 @@ const dashboardController = async (req, res) => {
     const totalTokens = apiKeys.length;
 
     const lastIssuedToken =
-      apiKeys.length > 0
-        ? {
-            issuedAt: formatIST(apiKeys[0].createdAt),
-          }
-        : null;
+      apiKeys.length > 0 ? { issuedAt: formatIST(apiKeys[0].createdAt) } : null;
 
     const tokens =
       apiKeys.length > 0
@@ -55,12 +51,37 @@ const dashboardController = async (req, res) => {
             expiresAt: key.expiresAt ? formatIST(key.expiresAt) : "No Expiry",
             lastIssued: formatIST(key.createdAt),
           }))
-        : null;
+        : [];
 
-    /* ================= USAGE (mock) ================= */
+    /* ================= REAL USAGE ================= */
+    const today = new Date().toISOString().slice(0, 10);
+    const month = new Date().toISOString().slice(0, 7);
+
+    let todayTotal = 0;
+    let monthTotal = 0;
+    let totalUsage = 0;
+
+    for (const key of apiKeys) {
+      const apiKeyId = key._id.toString();
+
+      const [day, monthCount, total] = await Promise.all([
+        redisClient.get(`usage:${apiKeyId}:day:${today}`),
+        redisClient.get(`usage:${apiKeyId}:month:${month}`),
+        redisClient.get(`usage:${apiKeyId}:total`),
+      ]);
+
+      todayTotal += Number(day) || 0;
+      monthTotal += Number(monthCount) || 0;
+      totalUsage += Number(total) || 0;
+    }
+
     const usage = {
-      today: 124,
-      limit: 1000,
+      today: todayTotal,
+      month: monthTotal,
+      total: totalUsage,
+      dailyLimit: 1000, // make dynamic later if needed
+      perMinute: 60,
+      perHour: 500,
     };
 
     /* ================= FINAL RESPONSE ================= */

@@ -1,4 +1,7 @@
-import { redisClient } from "../../../config/redis.js";
+import { generateOtp, storeOtp } from "../../../services/otp/otpService.js";
+import { sendEmail } from "../../../services/email/emailService.js";
+import { registerOtpTemplate } from "../../../services/email/templates/registerOtp.js";
+import { resetOtpTemplate } from "../../../services/email/templates/resetOtp.js";
 
 const sendOtpController = async (req, res) => {
   try {
@@ -6,25 +9,30 @@ const sendOtpController = async (req, res) => {
     const { type, identifier } = req.body;
 
     if (!flow || !type || !identifier) {
-      return res.status(400).json({
-        message: "Missing fields",
-      });
+      return res.status(400).json({ message: "Missing fields" });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = generateOtp();
 
-    const redisKey = `otp:${flow}:${type}:${identifier}`;
+    await storeOtp({ flow, type, identifier, otp });
 
-    await redisClient.set(redisKey, JSON.stringify({ otp, attempts: 0 }), {
-      EX: 300,
+    let template;
+
+    if (flow === "register") {
+      template = registerOtpTemplate(otp);
+    } else if (flow === "reset") {
+      template = resetOtpTemplate(otp);
+    }
+
+    await sendEmail({
+      to: identifier,
+      subject: template.subject,
+      html: template.html,
     });
-
-    console.log("OTP:", otp);
 
     return res.json({ message: "OTP sent successfully" });
   } catch (error) {
     console.log(error);
-
     return res.status(500).json({ message: "Server error" });
   }
 };

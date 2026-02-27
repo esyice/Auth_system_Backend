@@ -1,10 +1,13 @@
 import bcrypt from "bcrypt";
 import User from "../../models/users/User.js";
 import { redisClient } from "../../config/redis.js";
+import { registerSuccessTemplate } from "../../services/email/templates/registerSuccess.js";
+import { sendEmail } from "../../services/email/emailService.js";
 
 const registerController = async (req, res) => {
   try {
     const { name, email, password, mobile } = req.body;
+    const { subject, html } = registerSuccessTemplate();
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -40,6 +43,13 @@ const registerController = async (req, res) => {
     });
 
     await redisClient.del(verifyKey);
+
+    // Send registration success email
+    await sendEmail({
+      to: newUser.email,
+      subject,
+      html,
+    });
 
     return res.status(201).json({
       message: "User registered successfully",

@@ -11,4 +11,5 @@ externalRoutes.post("/register", verifyApiKey, registerExternal);
 // External User Login
 externalRoutes.post("/login", verifyApiKey, loginExternal);
 
+
 export default externalRoutes;

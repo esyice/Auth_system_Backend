@@ -5,7 +5,7 @@ import verifyJWT from "../middlewares/jwt/jwtMiddleware.js";
 import dashboardController from "../controllers/dashboard/dashboardController.js";
 import externalRoutes from "./externalRoutes.js";
 import developerRoutes from "./developerRoutes.js";
-import { sendEmail } from "../services/emailService.js";
+import { sendEmail } from "../services/email/emailService.js";
 
 const globalRoutes = express.Router();
 // console.log("GLOBAL ROUTES FILE LOADED");
