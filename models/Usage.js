@@ -3,21 +3,21 @@ import mongoose from "mongoose";
 
 const usageSchema = new mongoose.Schema(
   {
-    userId: {
+    apiKeyId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Apikeys",
       required: true,
       unique: true,
       index: true,
     },
 
-    // ===== Counters =====
-    today: {
+    // ===== Persistent Counters (Mongo) =====
+    month: {
       type: Number,
       default: 0,
     },
 
-    month: {
+    total: {
       type: Number,
       default: 0,
     },
@@ -33,12 +33,7 @@ const usageSchema = new mongoose.Schema(
       default: 10000,
     },
 
-    // ===== Reset helpers =====
-    lastDailyReset: {
-      type: Date,
-      default: Date.now,
-    },
-
+    // ===== Reset Helper =====
     lastMonthlyReset: {
       type: Date,
       default: Date.now,

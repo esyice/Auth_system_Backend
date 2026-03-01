@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
-import LogoutActivity from "../../models/users/LogoutActivity.js";
-import TokenBlacklist from "../../models/jwt/TokenBlacklist.js";
+import { redisClient } from "../../config/redis.js";
 
 const logoutController = async (req, res) => {
   try {
@@ -10,32 +9,22 @@ const logoutController = async (req, res) => {
       const token = authHeader.split(" ")[1];
 
       try {
-        // Decode token to get expiry + userId
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // 1️⃣ Blacklist token (until it naturally expires)
-        await TokenBlacklist.create({
-          token,
-          userId: decoded.id, // optional but useful
-          expiresAt: new Date(decoded.exp * 1000),
-        });
+        // Calculate remaining TTL in seconds
+        const currentTime = Math.floor(Date.now() / 1000);
+        const ttl = decoded.exp - currentTime;
 
-        // 2️⃣ Log logout activity (best-effort)
-        if (req.logoutInfo) {
-          await LogoutActivity.create({
-            userId: decoded.id,
-            status: "LOGOUT",
-            ip: req.logoutInfo.ip,
-            userAgent: req.logoutInfo.userAgent,
-          });
+        if (ttl > 0) {
+          // Store token in Redis blacklist with expiry
+          await redisClient.set(`blacklist:${token}`, "true", { EX: ttl });
         }
       } catch (err) {
-        // Token expired / invalid → do NOT block logout
         console.warn("Logout token decode failed:", err.message);
+        // Do NOT block logout
       }
     }
 
-    // 3️⃣ Always succeed
     return res.status(200).json({
       success: true,
       message: "Logged out successfully",
@@ -43,7 +32,6 @@ const logoutController = async (req, res) => {
   } catch (err) {
     console.error("Logout error:", err);
 
-    // Logout must NEVER fail from frontend POV
     return res.status(200).json({
       success: true,
       message: "Logged out successfully",

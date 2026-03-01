@@ -1,18 +1,19 @@
 import { redisClient } from "../../config/redis.js";
+import Usage from "../../models/Usage.js";
 
 export const getUsageByApiKey = async (apiKeyId) => {
   const today = new Date().toISOString().slice(0, 10);
-  const month = new Date().toISOString().slice(0, 7);
+  const dayKey = `usage:${apiKeyId}:day:${today}`;
 
-  const [todayCount, monthCount, totalCount] = await Promise.all([
-    redisClient.get(`usage:${apiKeyId}:day:${today}`),
-    redisClient.get(`usage:${apiKeyId}:month:${month}`),
-    redisClient.get(`usage:${apiKeyId}:total`),
-  ]);
+  // 1️⃣ Get today's usage from Redis
+  const todayCount = await redisClient.get(dayKey);
+
+  // 2️⃣ Get month + total from Mongo
+  const usage = await Usage.findOne({ apiKeyId }).lean();
 
   return {
     today: Number(todayCount) || 0,
-    month: Number(monthCount) || 0,
-    total: Number(totalCount) || 0,
+    month: usage?.month || 0,
+    total: usage?.total || 0,
   };
 };
